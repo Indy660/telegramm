@@ -69,15 +69,36 @@ let negativeRating = [ ];
 let rightConditions = [ "+", "спасибо", "спс", "👍", "👌", "ок", "ok" ];
 let wrongConditions = [ "-", "нет", "неправильно", "👎", "✖️", "не", "✖", "не помогло" ];
 
-let usersCantVote = [ ];
+let usersVoted = [];
 
-function setTime(user) {
-    usersCantVote.push(user);
-    function change(user) {
-        return user
+function canUserVote (user, date) {
+    let id = usersVoted.map(function(elem) {
+        return Object.keys(elem)
+    });
+    // id.flat()
+    console.log("id",id)
+    if (id.indexOf(user) === -1) {
+            console.log("Этот пользователь ещё не голосовал");
+            return true
+    } else {
+            console.log("Этот пользователь уже  голосовал");
+            return true
     }
-   setTimeout(change, 5000);
 }
+
+//     else {Object.keys
+//         if ((usersVoted.lastIndexOf(Object.keys(user)))+10 < date) {
+//             console.log("Вы смогли еще раз проголосовать");
+//             return true
+//         } else {
+//             console.log("Вы не можете ещё голосовать", Object.keys((usersVoted.lastIndexOf(Object.keys(user)))+10 - date)/10)
+//             return false
+//         }
+//     }
+// }
+
+
+
 
 
 function pushInArray(msg) {
@@ -85,14 +106,18 @@ function pushInArray(msg) {
     if (
         msg.reply_to_message &&
         ( msg.from.id !== msg.reply_to_message.from.id ) &&
-        msg.reply_to_message.from.is_bot === false
+        msg.reply_to_message.from.is_bot === false &&
+        canUserVote (msg.from.id, msg.date)
     ) {
          if (rightConditions.includes(msg.text.trim().toLowerCase())) {
              console.log("Добавлен в +", msg.reply_to_message.from.first_name);
-             positiveRating.push(msg.reply_to_message.from.first_name)
+             positiveRating.push(msg.reply_to_message.from.first_name);
+             usersVoted.push({[msg.from.id] : msg.date});
+              console.log('usersVoted',usersVoted);
          } else if (wrongConditions.includes(msg.text.trim().toLowerCase())) {
              console.log("Добавлен в -", msg.reply_to_message.from.first_name);
-             negativeRating.push(msg.reply_to_message.from.first_name)
+             negativeRating.push(msg.reply_to_message.from.first_name);
+             usersVoted.push({[msg.from.id] : msg.date});
          }
     }
 }
