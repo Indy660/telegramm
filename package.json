@@ -9,6 +9,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "download-file": "^0.1.5",
+    "formidable": "^1.2.1",
+    "fs-extra": "^8.1.0",
+    "http": "0.0.0",
+    "node-fetch": "^2.6.0",
     "node-telegram-bot-api": "^0.30.0"
   }
 }

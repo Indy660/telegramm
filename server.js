@@ -1,11 +1,14 @@
 const TelegramBot = require('node-telegram-bot-api');
+const fetch = require('node-fetch');
+const fs = require('fs-extra');
+const download = require('download-file');
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = '709253254:AAF2wXSv_gLq4Vch8cUrOugvp0wisuLqrsM';
 
 // Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, {polling: true});
-
+const bot = new TelegramBot(token, {polling: true,});
+// filepath: false,
 
 let positiveRating = [ ];
 let negativeRating = [ ];
@@ -62,7 +65,7 @@ const historyOpinions = [ ];
 bot.onText(/.+/, function(msg, match) {
     // console.log('msg')
     pushInArray(msg);
-    saveRaiting(msg)
+
 });
 
 
@@ -93,10 +96,17 @@ function pushInArray(msg) {
          if (rightConditions.includes(msg.text.trim().toLowerCase())) {
              // let i=0;
              // historyOpinions[i++] =
-             let
-             let message = "Пользователь " + msg.from.first_name + " положительно оценил ваш " +
-                            "комментарий '" + msg.reply_to_message.text + "' в " + msg.date;
-             historyOpinions.push(message)
+             let message = {
+                 review : "Положительный",
+                 userName : msg.from.first_name,
+                 userFamily : msg.from.last_name,
+                 userId : userId,
+                 comment : msg.reply_to_message.text,
+                 time : msg.date
+             };
+             // let message = "Пользователь " + msg.from.first_name + " положительно оценил ваш " +
+             //                "комментарий '" + msg.reply_to_message.text + "' в " + msg.date;
+             historyOpinions.push(message);
              console.log(historyOpinions);
              console.log("Добавлен в +", msg.reply_to_message.from.first_name);
              positiveRating.push(msg.reply_to_message.from.first_name);
@@ -105,9 +115,18 @@ function pushInArray(msg) {
              };
               console.log(usersVoted);
          } else if (wrongConditions.includes(msg.text.trim().toLowerCase())) {
-             let message = "Пользователь " + msg.from.first_name + " негативно оценил ваш " +
-                            "комментарий '" + msg.reply_to_message.text + "' в " + msg.date;
-             historyOpinions.push(message)
+             let message = {
+                 review : "Отрицательный",
+                 userName : msg.from.first_name,
+                 userFamily : msg.from.last_name,
+                 userId : userId,
+                 replyUser : msg.reply_to_message.from.id,
+                 comment : msg.reply_to_message.text,
+                 time : msg.date
+             };
+             // let message = "Пользователь " + msg.from.first_name + " негативно оценил ваш " +
+             //                "комментарий '" + msg.reply_to_message.text + "' в " + msg.date;
+             historyOpinions.push(message);
              console.log(historyOpinions);
              console.log("Добавлен в -", msg.reply_to_message.from.first_name);
              negativeRating.push(msg.reply_to_message.from.first_name);
@@ -139,15 +158,12 @@ function countPlus(positiveRating, negativeRating) {
             finalRating[negativeRating[j]]--;
         }
     }
-     console.log("Сумма",finalRating)
+     console.log("Сумма",finalRating);
     return finalRating
 }
 
 
 
-function saveRaiting(msg) {
-
-}
 
 
 bot.onText(/\/start/, function ratingShow(msg) {
@@ -171,13 +187,80 @@ bot.onText(/\/start/, function ratingShow(msg) {
 
 
 bot.onText(/\/history/, function ratingShow(msg) {
-    let message ="";
+    let dateSeconds = new Date().getTime()/1000;
+    let message ="Мнение пользователей о вас: \n";
     for (let i = 0; i < historyOpinions.length; i++) {
-        message += i+1 +' мнение \n'+ historyOpinions[i] +  "\n";
+        if (historyOpinions[i].userId !== msg.from.id) {
+            let time = Math.round(dateSeconds - historyOpinions[i].time);
+            if (time>60)  time = Math.floor((dateSeconds - historyOpinions[i].time)/60) + " минуты и " + Math.round(dateSeconds - historyOpinions[i].time-60*Math.floor((dateSeconds - historyOpinions[i].time)/60))
+            message +=
+                // i+1 +' мнение ' +'\n'+
+                historyOpinions[i].review + " отзыв оставил пользователь " + historyOpinions[i].userName + " " +historyOpinions[i].userFamily + "" +
+                " под вашим комментарием '" + historyOpinions[i].comment + "'" + " " + time + " секунд назад \n";
+        }
     }
+    if (message ==="Мнение пользователей о вас: \n") message += "Вас нигде не упомянали.";
+    // console.log( message);
+    bot.sendMessage(msg.chat.id, message)
+});
+
+
+bot.onText(/\/status/, function ratingShow(msg) {
+    let message ="Ваш статус: \n";
+    let status = 0;
+    for (let i = 0; i < historyOpinions.length; i++) {
+        if (historyOpinions[i].replyUser === msg.from.id )
+            if (historyOpinions[i].review === "Положительный")
+                status ++;
+        else status --;
+    }
+    if (status > 0) {message += "Крутой"}
+    if (status === 0) {message += "Ты кто такой?"}
+    if (status < 0) {message += "Лох"}
     // console.log( message);
     bot.sendMessage(msg.chat.id, message)
 });
 
 
 
+bot.onText(/\/download (.+)/, function ratingShow(msg, match) {
+     const chatId = msg.chat.id;
+    const urlDownload = match[1];
+    const folder = "C:\\Users\\User\\Desktop\\Работа\\telegram_bot vers 4\\downloaded files"
+    console.log(1)
+   downloadFile(urlDownload, folder, chatId);
+
+});
+
+// async
+function downloadFile(linkDownload, linkStored, chat) {
+    let lengthPath = fs.readdirSync(linkStored).length;
+    console.log("Файлов в папке", lengthPath);
+    const url = linkDownload;
+    let options = {
+        directory: linkStored,
+        // filename: "Файл " + Number(lengthPath + 1)
+        filename: "Ваш скачанный файл"
+    };
+  downloadPromise(url, options) .then(fullPath=> {
+        console.log("Здесь уже файл должен быть скачан");
+        // let fullPath = linkStored + "\\Ваш скачанный файл";
+        console.log(fullPath);
+        bot.sendDocument(chat, fullPath);
+    })
+}
+
+
+
+function downloadPromise(directory, options, chat) {
+  return new Promise(function(resolve, reject) {
+      download(directory, options, function(err, data ) {
+      if (err) reject(err);
+      else {
+        console.log("Скачан файл");
+          console.log("Путь", data);
+         resolve(data);
+      }
+    });
+  });
+}
