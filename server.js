@@ -6,10 +6,14 @@ const download = require('download-file');
 // replace the value below with the Telegram token you receive from @BotFather
 const token = '709253254:AAF2wXSv_gLq4Vch8cUrOugvp0wisuLqrsM';
 
+
+
+// 709253254:AAF2wXSv_gLq4Vch8cUrOugvp0wisuLqrsM
+
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true,});
 // filepath: false,
-
+bot.sendMessage(-276583637, "Бот Indy заработал!");
 let positiveRating = [ ];
 let negativeRating = [ ];
 let rightConditions = [ "+", "спасибо", "спс", "👍", "👌", "ок", "ok" ];
@@ -18,9 +22,9 @@ let wrongConditions = [ "-", "нет", "неправильно", "👎", "✖️
 
 
 
-bot.sendMessage(-276583637, "Бот Indy заработал!");
 
-
+// const token = '725276890:AAFZsqsDgLvLfhgY8t-9lhjhCN-ZwAazqUM';
+// bot.sendMessage(-276583637, "Кто ещё кого взламает, пидрила!");
 
 const usersVoted = { };
 
@@ -63,7 +67,7 @@ const historyOpinions = [ ];
 
 
 bot.onText(/.+/, function(msg, match) {
-    // console.log('msg')
+     // console.log(msg)
     pushInArray(msg);
 
 });
@@ -74,11 +78,11 @@ function canUserVote (user, date) {
             console.log("Этот пользователь ещё не голосовал");
             return true
     } else {
-        if (usersVoted[user].lastMessage + 10 < date) {
+        if (usersVoted[user].lastMessage + 1 < date) {
             console.log("Вы смогли еще раз проголосовать");
             return true
         } else {
-            console.log("Вы не можете ещё голосовать", usersVoted[user].lastMessage + 10 - date, "секунд");
+            console.log("Вы не можете ещё голосовать", usersVoted[user].lastMessage + 1 - date, "секунд");
             return false
         }
     }
@@ -93,43 +97,35 @@ function pushInArray(msg) {
         msg.reply_to_message.from.is_bot === false &&
         canUserVote (userId, msg.date)
     ) {
-         if (rightConditions.includes(msg.text.trim().toLowerCase())) {
-             // let i=0;
-             // historyOpinions[i++] =
-             let message = {
-                 review : "Положительный",
-                 userName : msg.from.first_name,
-                 userFamily : msg.from.last_name,
-                 userId : userId,
-                 comment : msg.reply_to_message.text,
-                 time : msg.date
-             };
-             // let message = "Пользователь " + msg.from.first_name + " положительно оценил ваш " +
-             //                "комментарий '" + msg.reply_to_message.text + "' в " + msg.date;
+        const msgLowerText = msg.text.trim().toLowerCase();
+        let message = {
+            userName : msg.from.first_name,
+            userFamily : msg.from.last_name,
+            userId : userId,
+            replyUser : msg.reply_to_message.from.id,
+            replyUserName: msg.reply_to_message.from.first_name,
+            comment : msg.reply_to_message.text,
+            time : msg.date,
+            textMessage : msg.text
+        };
+         if (rightConditions.includes(msgLowerText)) {
+             message.review = "Положительный";
+             message.raiting = "+";
              historyOpinions.push(message);
              console.log(historyOpinions);
              console.log("Добавлен в +", msg.reply_to_message.from.first_name);
-             positiveRating.push(msg.reply_to_message.from.first_name);
+             positiveRating.push(message.replyUser); // было msg.reply_to_message.from.first_name
              usersVoted[userId] = {
                  lastMessage : msg.date
              };
               console.log(usersVoted);
-         } else if (wrongConditions.includes(msg.text.trim().toLowerCase())) {
-             let message = {
-                 review : "Отрицательный",
-                 userName : msg.from.first_name,
-                 userFamily : msg.from.last_name,
-                 userId : userId,
-                 replyUser : msg.reply_to_message.from.id,
-                 comment : msg.reply_to_message.text,
-                 time : msg.date
-             };
-             // let message = "Пользователь " + msg.from.first_name + " негативно оценил ваш " +
-             //                "комментарий '" + msg.reply_to_message.text + "' в " + msg.date;
+         } else if (wrongConditions.includes(msgLowerText)) {
+             message.review = "Отрицательный";
+             message.raiting = "-";
              historyOpinions.push(message);
              console.log(historyOpinions);
              console.log("Добавлен в -", msg.reply_to_message.from.first_name);
-             negativeRating.push(msg.reply_to_message.from.first_name);
+             negativeRating.push(message.replyUser);  // было msg.reply_to_message.from.first_name
              usersVoted[userId] = {
                  lastMessage : msg.date
              };
@@ -139,10 +135,9 @@ function pushInArray(msg) {
 }
 
 
-
+// negativeRating.push(msg.reply_to_message.from.id);  // было first_name
 
 function countPlus(positiveRating, negativeRating) {
-    // console.log("mass",preRating)
     let finalRating = {};
     for (let i = 0; i < positiveRating.length; i++) {
         if (finalRating[positiveRating[i]] === undefined) {
@@ -158,28 +153,42 @@ function countPlus(positiveRating, negativeRating) {
             finalRating[negativeRating[j]]--;
         }
     }
-     console.log("Сумма",finalRating);
+     // console.log("Сумма",finalRating);
     return finalRating
 }
 
+function seekNameByID(id) {
+    for (let i = 0; i < historyOpinions.length; i++) {
+        if (historyOpinions[i].replyUser == id) {
+            return historyOpinions[i].replyUserName
+        }
+    }
+    return  null
+}
 
 
 
 
 bot.onText(/\/start/, function ratingShow(msg) {
     // console.log("Команда старт сработала")
-    let object =countPlus(positiveRating, negativeRating);
+    let sumObject =countPlus(positiveRating, negativeRating);   // получается { '311805730': 1, '375240230': -1 }
     let result = [];
-    for (let name in object) {
-        result.push([name, object[name]]);
-    }
+    for (let id in sumObject) {
+        result.push({
+            id: id,
+            sum: sumObject[id]
+        });
+    }                                           // получается  [ { id: '311805730', sum: 1 }, { id: '375240230', sum: -1 } ]
     result.sort(function(a, b) {
-        return b[1] - a[1];
+        return b.sum - a.sum;
     });
-    console.log("Конечный результат", result);
+    // console.log("Конечный результат", result);
     let message ="";
+    //console.log('historyOpinions',historyOpinions)
     for (let i = 0; i < result.length; i++) {
-        message += i+1 +' место '+ result[i][0] + ":  " + result[i][1] +  " голоса \n";
+        const id = result[i].id;
+        const userName = seekNameByID(id);
+        message += i+1 +' место '+ userName + ":  " + result[i].sum +  " голоса \n";
     }
     // console.log( message);
     bot.sendMessage(msg.chat.id, message)
@@ -210,17 +219,56 @@ bot.onText(/\/status/, function ratingShow(msg) {
     let status = 0;
     for (let i = 0; i < historyOpinions.length; i++) {
         if (historyOpinions[i].replyUser === msg.from.id )
-            if (historyOpinions[i].review === "Положительный")
+            if (historyOpinions[i].raiting === "+")
                 status ++;
         else status --;
     }
-    if (status > 0) {message += "Крутой"}
-    if (status === 0) {message += "Ты кто такой?"}
-    if (status < 0) {message += "Лох"}
+    message = checkStatus(status);
     // console.log( message);
     bot.sendMessage(msg.chat.id, message)
 });
 
+const arrayStatus = [
+    {
+        lt: -1,
+        value: 'В шаге от бана ' + " меньше -1 голоса"
+    }, {
+        eq: -1,
+        value: 'Ты не интересен? ' + "-1 голос"
+    }, {
+        eq: 0,
+        value: 'Ты кто такой? ' + "0 голосов"
+    }, {
+        eq: 1,
+        value: 'Кто-то по ошибке нажал и проголосовал за тебя ' + "1 голос"
+    }, {
+        eq: 2,
+        value: 'Два человека проголосовало за тебя \n наверно, помешательство ' + "2 голоса"
+    }, {
+        eq: 3,
+        value:  "Норм " + "3 голоса"
+    }, {
+        gt: 3,
+        value: "Вы популярны, админ доволен вами" + " более 3 голосов "
+    },
+];
+
+
+function checkStatus(raiting){
+    for(let item of arrayStatus){
+        if(item.hasOwnProperty('eq') && item.eq === raiting){
+            return item.value
+        }
+        if (item.hasOwnProperty('lt') && raiting < item.lt){
+            return item.value
+        }
+        if (item.hasOwnProperty('gt') && raiting > item.gt){
+            return item.value
+        }
+
+    }
+    return 'Как ты сломал здесь все!?'
+}
 
 
 bot.onText(/\/download (.+)/, function ratingShow(msg, match) {
@@ -228,7 +276,11 @@ bot.onText(/\/download (.+)/, function ratingShow(msg, match) {
     const urlDownload = match[1];
     const folder = "C:\\Users\\User\\Desktop\\Работа\\telegram_bot vers 4\\downloaded files"
     console.log(1)
-   downloadFile(urlDownload, folder, chatId);
+   downloadFile(urlDownload, folder, chatId)
+       .then(()=>{
+            console.log('Файл отправлся')
+        })
+
 
 });
 
@@ -242,11 +294,11 @@ function downloadFile(linkDownload, linkStored, chat) {
         // filename: "Файл " + Number(lengthPath + 1)
         filename: "Ваш скачанный файл"
     };
-  downloadPromise(url, options) .then(fullPath=> {
+    return downloadPromise(url, options).then(fullPath=> {
         console.log("Здесь уже файл должен быть скачан");
         // let fullPath = linkStored + "\\Ваш скачанный файл";
         console.log(fullPath);
-        bot.sendDocument(chat, fullPath);
+        return bot.sendDocument(chat, fullPath);
     })
 }
 
@@ -264,3 +316,10 @@ function downloadPromise(directory, options, chat) {
     });
   });
 }
+
+// 1 ое название htttp заголовка
+// 2- ое reply + file
+
+
+// http express
+// json массива
