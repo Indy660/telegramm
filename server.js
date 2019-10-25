@@ -1,7 +1,14 @@
 const TelegramBot = require('node-telegram-bot-api');
-const fetch = require('node-fetch');
 const fs = require('fs-extra');
 const download = require('download-file');
+
+const http = require("http");
+const request = require('request');
+
+const fetch = require('node-fetch');
+const url = require('url');
+// const express = require('express')
+// const app = express()
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = '709253254:AAF2wXSv_gLq4Vch8cUrOugvp0wisuLqrsM';
@@ -18,6 +25,57 @@ let positiveRating = [ ];
 let negativeRating = [ ];
 let rightConditions = [ "+", "спасибо", "спс", "👍", "👌", "ок", "ok" ];
 let wrongConditions = [ "-", "нет", "неправильно", "👎", "✖️", "не", "✖", "не помогло" ];
+
+
+
+
+// function getHostAndPath(url) {
+//     url = url.replace("https://", '');
+//     url = url.replace("http://", '');
+//     url = url.replace("www.", '');
+//     let index = url.indexOf('/');
+//     console.log([url.substr(0, index), url.substr(index)])
+//     return [url.substr(0, index), url.substr(index)]
+// }
+
+// let url="https://docs.google.com/document/d/1N4Wm9I2vHh5KmHHeTVPGHN5PZXEM-RU_k4gIX1TOVvo/export?format=docx"
+//
+//
+// request(url, function (err, res, body){
+//     console.log(JSON.stringify(res.headers,null,'\n'));
+// });
+
+/*
+//
+let options = {
+    method: 'GET',
+    host: getHostAndPath(url)[0],
+    port: 443,
+    path: getHostAndPath(url)[1]
+};
+console.log('options',options)
+let req = http.request(options, function(res) {
+        console.log(JSON.stringify(res.headers,null,'\t'));
+        console.log("Имя файла - ", JSON.stringify(res.headers.filename));
+        console.log("Имя файла 2 - ",res.headers['content-disposition'] [1])
+    }
+);
+req.end();
+*/
+
+
+// var url2 = 'http://l4.yimg.com/nn/fp/rsz/112113/images/smush/aaroncarter_635x250_1385060042.jpg';
+//
+// var r = request(url2);
+//
+// r.on('response',  function (res) {
+//     res.pipe(fs.createWriteStream('./' + res.headers.date + '.' + res.headers['content-type'].split('/')[1]));
+//
+// });
+
+
+
+
 
 
 
@@ -271,51 +329,170 @@ function checkStatus(raiting){
 }
 
 
-bot.onText(/\/download (.+)/, function ratingShow(msg, match) {
-     const chatId = msg.chat.id;
-    const urlDownload = match[1];
-    const folder = "C:\\Users\\User\\Desktop\\Работа\\telegram_bot vers 4\\downloaded files"
-    console.log(1)
-   downloadFile(urlDownload, folder, chatId)
-       .then(()=>{
-            console.log('Файл отправлся')
-        })
+
+// function getName(url) {
+//     let req = request.get(url).on('response', function (res) {
+//             let regexp = /filename=\"(.*)\"/gi;
+//             let filename = regexp.exec(res.headers['content-disposition'])[1];
+//             console.log(filename);
+//             return filename
+//         });
+//     return req
+// }
+//
+//
+// function doRequest(url) {
+//     return new Promise(function (resolve, reject) {
+//         request.get(url).on('response',function (error, res, body) {
+//             if (!error && res.statusCode == 200) {
+//                 resolve(body);
+//             } else {
+//                 reject(error);
+//             }
+//         });
+//     });
+// }
+//
+// // Usage:
+//
+// async function main() {
+//     let res = await doRequest("https://www.npmjs.com/package/node-fetch");
+//     // res.on('response', function (res) {
+//     //     let regexp = /filename=\"(.*)\"/gi;
+//     //     let filename = regexp.exec(res.headers['content-disposition'])[1];
+//         console.log(res);
+//         return res
+//
+// }
+//
+// main();
+//
+//
+// function a () {
+//     console.log(1)
+//     console.log(getName("https://docs.google.com/document/d/1N4Wm9I2vHh5KmHHeTVPGHN5PZXEM-RU_k4gIX1TOVvo/export?format=docx"))
+//     console.log(2)
+// }
+//
+// // a()
+//
+//
+// function downloadPromise(directory, options) {
+//     return new Promise(function(resolve, reject) {
+//         download(directory, options, function(err, data ) {
+//             if (err) reject(err);
+//             else {
+//                 console.log("Скачан файл");
+//                 // console.log(1, JSON.stringify(req.headers));
+//                 console.log("Путь", data);
+//                 resolve(data);
+//             }
+//         });
+//     });
+// }
+//
+//
+//
+// function downloadFile(linkDownload, linkStored, chat) {
+//     // let lengthPath = fs.readdirSync(linkStored).length;
+//     // console.log("Файлов в папке", lengthPath);
+//     const url = linkDownload;
+//     let options = {
+//         directory: linkStored,
+//         filename: getName(url) //|| "Ваш скачанный файл"
+//     };
+//     console.log("File", options.filename)
+//     console.log("Здесь название файла уже должно быть определенно")
+//     return downloadPromise(url, options).then(fullPath=> {
+//         console.log("Здесь уже файл должен быть скачан");
+//         // let fullPath = linkStored + "\\Ваш скачанный файл";
+//         console.log(fullPath);
+//         return bot.sendDocument(chat, fullPath);
+//     })
+// }
+
+// let file_url = msg.text;
+// let file_name = url.parse(file_url).pathname.split('/' || '?' || '=' || '#' || '~' || '%' || '&').pop();
+// const res = await fetch(file_url);
+// let options = {
+//     directory: "C:\\Users\\User\\Desktop\\Работа\\telegram_bot vers 4\\downloaded files",
+//     filename: res.headers.get('content-disposition').match(/filename="(.+)?"/)[1] || file_name,
+// };
 
 
-});
 
-// async
-function downloadFile(linkDownload, linkStored, chat) {
-    let lengthPath = fs.readdirSync(linkStored).length;
-    console.log("Файлов в папке", lengthPath);
-    const url = linkDownload;
+bot.onText(/http\S+/, async (msg) => {
+    let file_url = msg.text;
+    let file_name = url.parse(file_url).pathname.split('/' || '?' || '=' || '#' || '~' || '%' || '&').pop();
+    const res = await fetch(file_url);
+    if (res.headers.get('content-disposition')) {
+        const filename = res.headers.get('content-disposition').match(/filename="(.+)?"/)[1];
+        options.filename = filename
+    }
     let options = {
-        directory: linkStored,
-        // filename: "Файл " + Number(lengthPath + 1)
-        filename: "Ваш скачанный файл"
+        directory: "C:\\Users\\User\\Desktop\\Работа\\telegram_bot vers 4\\downloaded files",
+        filename: file_name,
     };
-    return downloadPromise(url, options).then(fullPath=> {
-        console.log("Здесь уже файл должен быть скачан");
-        // let fullPath = linkStored + "\\Ваш скачанный файл";
-        console.log(fullPath);
-        return bot.sendDocument(chat, fullPath);
+
+    download(file_url, options, async function(err) {
+        if (err) {
+            console.log("Ошибка при скачивании");
+        } else await bot.sendDocument(msg.chat.id, options.directory +"\\"+ options.filename,{
+            reply_to_message_id: msg.message_id
+        })
     })
-}
+})
 
 
 
-function downloadPromise(directory, options, chat) {
-  return new Promise(function(resolve, reject) {
-      download(directory, options, function(err, data ) {
-      if (err) reject(err);
-      else {
-        console.log("Скачан файл");
-          console.log("Путь", data);
-         resolve(data);
-      }
-    });
-  });
-}
+
+
+
+
+
+
+
+
+//     function ratingShow(msg, match) {
+//     const chatId = msg.chat.id;
+//     const urlDownload = match[1];
+//     const folder = "C:\\Users\\User\\Desktop\\Работа\\telegram_bot vers 4\\downloaded files"
+//     console.log(1)
+//     downloadFile(urlDownload, folder, chatId)
+//         .then(()=>{
+//             console.log('Файл отправлся')
+//         })
+// });
+
+// let url = 'http://blog.mynotiz.de/';
+//
+// let options = {
+//     url: url,
+//     method: 'HEAD'
+// };
+//
+// request(options, function (error, response, body) {
+//         if (error) {
+//             return console.error('upload failed:', error);
+//         }
+//
+//         if (response.headers['content-length']) {
+//             var file_size = response.headers['content-length'];
+//             console.log(file_size);
+//         }
+//     }
+// );
+
+
+
+
+
+
+// app.listen(3000, function () {
+//     console.log('Отслеживаем порт: 3000!');
+// });
+
+
 
 // 1 ое название htttp заголовка
 // 2- ое reply + file
