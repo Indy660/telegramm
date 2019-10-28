@@ -7,8 +7,9 @@ const request = require('request');
 
 const fetch = require('node-fetch');
 const url = require('url');
-// const express = require('express')
-// const app = express()
+
+const express = require('express')
+const app = express()
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = '709253254:AAF2wXSv_gLq4Vch8cUrOugvp0wisuLqrsM';
@@ -18,7 +19,12 @@ const token = '709253254:AAF2wXSv_gLq4Vch8cUrOugvp0wisuLqrsM';
 // 709253254:AAF2wXSv_gLq4Vch8cUrOugvp0wisuLqrsM
 
 // Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, {polling: true,});
+const bot = new TelegramBot(token, {polling: true,
+    // request: {
+    //     proxy: "http://194.26.180.142:3128"
+    // }
+});
+
 // filepath: false,
 bot.sendMessage(-276583637, "Бот Indy заработал!");
 let positiveRating = [ ];
@@ -127,7 +133,6 @@ const historyOpinions = [ ];
 bot.onText(/.+/, function(msg, match) {
      // console.log(msg)
     pushInArray(msg);
-
 });
 
 
@@ -227,9 +232,9 @@ function seekNameByID(id) {
 
 
 
-bot.onText(/\/start/, function ratingShow(msg) {
+bot.onText(/\/rating/,  function ratingShow(msg) {
     // console.log("Команда старт сработала")
-    let sumObject =countPlus(positiveRating, negativeRating);   // получается { '311805730': 1, '375240230': -1 }
+    let sumObject = countPlus(positiveRating, negativeRating);   // получается { '311805730': 1, '375240230': -1 }
     let result = [];
     for (let id in sumObject) {
         result.push({
@@ -248,12 +253,18 @@ bot.onText(/\/start/, function ratingShow(msg) {
         const userName = seekNameByID(id);
         message += i+1 +' место '+ userName + ":  " + result[i].sum +  " голоса \n";
     }
-    // console.log( message);
-    bot.sendMessage(msg.chat.id, message)
+     console.log('before bot.sendMessage',  message);
+     bot.sendMessage(msg.chat.id, message);
 });
 
+app.get('/ajax/rating.json',  function (req, res) {
+    res.json({
+        rating: historyOpinions,
+    });
+})
 
-bot.onText(/\/history/, function ratingShow(msg) {
+
+bot.onText(/\/history/, function historyShow(msg) {
     let dateSeconds = new Date().getTime()/1000;
     let message ="Мнение пользователей о вас: \n";
     for (let i = 0; i < historyOpinions.length; i++) {
@@ -267,7 +278,7 @@ bot.onText(/\/history/, function ratingShow(msg) {
         }
     }
     if (message ==="Мнение пользователей о вас: \n") message += "Вас нигде не упомянали.";
-    // console.log( message);
+    console.log('before bot.sendMessage 2',  message);
     bot.sendMessage(msg.chat.id, message)
 });
 
@@ -283,6 +294,7 @@ bot.onText(/\/status/, function ratingShow(msg) {
     }
     message = checkStatus(status);
     // console.log( message);
+    console.log('before bot.sendMessage 3',  message);
     bot.sendMessage(msg.chat.id, message)
 });
 
@@ -441,7 +453,29 @@ bot.onText(/http\S+/, async (msg) => {
             reply_to_message_id: msg.message_id
         })
     })
-})
+});
+
+
+
+// app.use(function(req, res, next) {
+//     return next(createError(404, 'Api метод не существует'))
+// });
+
+
+// app.use(function(err, req, res, next) {
+//     res.status(err.statusCode || 500);
+//     res.json({
+//         success: 0,
+//         error:err,
+//         message: err.message
+//     })
+// });
+
+
+app.listen(3000, function () {
+    console.log('Отслеживаем порт: 3000!');
+});
+
 
 
 
