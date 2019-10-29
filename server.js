@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs-extra');
 const download = require('download-file');
-
+var cors = require('cors')    //объединение node и vue
 const http = require("http");
 const request = require('request');
 
@@ -10,7 +10,7 @@ const url = require('url');
 
 const express = require('express')
 const app = express()
-
+app.use(cors())
 // replace the value below with the Telegram token you receive from @BotFather
 const token = '709253254:AAF2wXSv_gLq4Vch8cUrOugvp0wisuLqrsM';
 
@@ -167,7 +167,8 @@ function pushInArray(msg) {
             userId : userId,
             replyUser : msg.reply_to_message.from.id,
             replyUserName: msg.reply_to_message.from.first_name,
-            comment : msg.reply_to_message.text,
+            replyUserFamily: msg.reply_to_message.from.last_name,
+            replyComment : msg.reply_to_message.text,
             time : msg.date,
             textMessage : msg.text
         };
@@ -253,15 +254,33 @@ bot.onText(/\/rating/,  function ratingShow(msg) {
         const userName = seekNameByID(id);
         message += i+1 +' место '+ userName + ":  " + result[i].sum +  " голоса \n";
     }
-     console.log('before bot.sendMessage',  message);
+     // console.log('before bot.sendMessage',  message);
      bot.sendMessage(msg.chat.id, message);
 });
 
 app.get('/ajax/rating.json',  function (req, res) {
-    res.json({
-        rating: historyOpinions,
+    let rating = countPlus(positiveRating, negativeRating);
+    let result = [];
+    for (let id in rating) {
+        result.push({
+            id: id,
+            sum: rating[id],
+            name: seekNameByID(id)
+        });
+    }
+    result.sort(function(a, b) {
+        return b.sum - a.sum;
     });
-})
+    res.json({
+        sortRating: result,
+    });
+});
+
+app.get('/ajax/history.json',  function (req, res) {
+    res.json({
+        historyOpinions: historyOpinions
+    });
+});
 
 
 bot.onText(/\/history/, function historyShow(msg) {
@@ -274,11 +293,11 @@ bot.onText(/\/history/, function historyShow(msg) {
             message +=
                 // i+1 +' мнение ' +'\n'+
                 historyOpinions[i].review + " отзыв оставил пользователь " + historyOpinions[i].userName + " " +historyOpinions[i].userFamily + "" +
-                " под вашим комментарием '" + historyOpinions[i].comment + "'" + " " + time + " секунд назад \n";
+                " под вашим комментарием '" + historyOpinions[i].replyComment + "'" + " " + time + " секунд назад \n";
         }
     }
     if (message ==="Мнение пользователей о вас: \n") message += "Вас нигде не упомянали.";
-    console.log('before bot.sendMessage 2',  message);
+    // console.log('before bot.sendMessage 2',  message);
     bot.sendMessage(msg.chat.id, message)
 });
 
@@ -294,7 +313,7 @@ bot.onText(/\/status/, function ratingShow(msg) {
     }
     message = checkStatus(status);
     // console.log( message);
-    console.log('before bot.sendMessage 3',  message);
+    // console.log('before bot.sendMessage 3',  message);
     bot.sendMessage(msg.chat.id, message)
 });
 
