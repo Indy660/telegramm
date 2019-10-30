@@ -93,6 +93,7 @@ req.end();
 const usersVoted = { };
 
 const historyOpinions = [ ];
+const allMessage = [ ];
 // var questions = [{
 //     title: 'Кто нажал на эту кнопку?',
 //     buttons: [
@@ -133,6 +134,7 @@ const historyOpinions = [ ];
 bot.onText(/.+/, function(msg, match) {
      // console.log(msg)
     pushInArray(msg);
+    allMessage.push(msg)
 });
 
 
@@ -281,6 +283,26 @@ app.get('/ajax/history.json',  function (req, res) {
         historyOpinions: historyOpinions
     });
 });
+
+app.get('/ajax/allusers.json',  function (req, res) {
+    let result = [];
+    for (let id in allMessage) {
+        result.push({
+            userId :  allMessage[id].from.id,
+            userName : allMessage[id].from.first_name,
+            userFamily : allMessage[id].from.last_name,
+        });
+    }
+    const unique = result.filter((item, index) => {
+        return result.findIndex(i => i.userId === item.userId) === index;
+    });
+
+    res.json({
+        userArray: unique,
+        userArray2: result
+    });
+});
+
 
 
 bot.onText(/\/history/, function historyShow(msg) {
