@@ -291,6 +291,7 @@ app.get('/ajax/allusers.json',  function (req, res) {
             userId :  allMessage[id].from.id,
             userName : allMessage[id].from.first_name,
             userFamily : allMessage[id].from.last_name,
+            nickName : allMessage[id].from.username,
         });
     }
     const unique = result.filter((item, index) => {
